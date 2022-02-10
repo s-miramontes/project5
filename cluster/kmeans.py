@@ -19,64 +19,12 @@ class KMeans:
             max_iter: int
                 the maximum number of iterations before quitting model fit
         """
-        # not entirely sure I need this
+    
         self.k = k 
         self.metric = metric
         self.tol = tol
         self.max_iter = max_iter
 
-        # you shouldn't initialize a matrix mat here since
-        # you are simply initializing the model, as in saying
-        # how many clusters, what metric, tolerance, and
-        # total number of iterations.
-        # the fitting of data comes afterward, and by generating
-        # data to THEN fit. That is, you pass it in to the fit
-        # function. 
-        # so you treat mat abstractly. 
-
-    def _random_centroids(self, mat: np.ndarray):
-        '''
-        Private method to randomly generate centroids given k
-        number of clusters, from the available points stored
-        in mat.
-        '''
-
-        # need a total of k by total features centroids
-        all_centroids = np.zeros((self.k, self.num_feats))
-
-        # random selection of (k) P[oints]
-        for p in range(self.k):
-            # pick random point from all available
-            aCentroid = np.random.choice(range(self.num_examples))
-            # save it
-            all_centroids[p] = all_centroids
-
-        # return the randomly generated centroids
-        return all_centroids
-
-    def _get_neighbors(self, mat, centroids, metric):
-        '''
-        Private method to create clusters based on the proximity of
-        each point. 
-        Note that proximity is calculated based on the metric
-        inputed. 
-        '''
-
-        # need k number of clusters
-        k_clusters = [[] for _ in range(self.k)]
-
-        # calculate distance to centroid based on given metric
-        # I guess this follows the sklearn API
-        assert metric == 'euclidean', "Must include euclidean metric."
-
-        for j, x in enumerate(mat):
-            # punny
-            nearest_neighbor = np.argmin(np.sqrt(np.sum(x - centroids) ** 2,
-                                         axis = 1))
-            k_clusters[nearest_neighbor].append(j)
-
-        return k_clusters
-    
 
     def fit(self, mat: np.ndarray):
         """
@@ -87,23 +35,38 @@ class KMeans:
                 A 2D matrix where the rows are observations and columns are features
         """
 
-        # get num examples, and num features
-        self.num_examples, self.num_feats = mat.shape
+        # get total num of examples features from mat
+        self.num_samples, self.num_feats = mat.shape
 
-        # steps:
-        # generate random centroids based on mat
+        # initialize random centroids from mat
+        self.centroids = self._random_centroids(mat)
 
-
-        # populate other poitns according to the clonseness to centroids above
-        # given the number of iterations
-
-        # how to decide on old centroid vs new one?
-        # is this where the tolerance is used?
-
-        # when to predict?
-        # what about order?
+        # starting with huge error to then minimize
+        self._err = np.inf
 
 
+        # keeping track of the number of iterations
+        for _ in range(self.max_iter):
+
+            # assign rest of points to centers in self.centroids
+            clusters = self._cluster_points(mat)
+
+            # old centroids vs new assigned based on mean
+            prev_centroids = self.centroids 
+            self.centroids = self._get_centroids(clusters, mat)
+
+            # calculate mse, via cdist, np.square and np.mean - yay vector ops
+            mse = np.average(np.square(np.min(cdist(mat, 
+                                                self.centroids,
+                                            metric = self.metric))))
+
+            # delta errors, for checking diff.
+            delta_err = self._err - mse
+
+            if delta_err < self.tol:
+                print("Clusters found -- Convergence Achieved)")
+                self._err = mse
+                break
 
 
     def predict(self, mat: np.ndarray) -> np.ndarray:
@@ -119,6 +82,10 @@ class KMeans:
                 a 1D array with the cluster label for each of the observations in `mat`
         """
 
+        # get labels from the best saved centroids
+        return self._cluster_points(mat)
+
+
     def get_error(self) -> float:
         """
         returns the final squared-mean error of the fit model
@@ -128,7 +95,9 @@ class KMeans:
                 the squared-mean error of the fit model
         """
 
-    def get_centroids(self) -> np.ndarray:
+        return self._err
+
+    def get_centroids(self) -> np.ndarray: # new centroids?
         """
         returns the centroid locations of the fit model
 
@@ -136,3 +105,57 @@ class KMeans:
             np.ndarray
                 a `k x m` 2D matrix representing the cluster centroids of the fit model
         """
+
+        return self.centroids
+
+    def _random_centroids(self, mat: np.ndarray): # rename and change
+        '''
+        Private method to randomly generate centroids given k
+        number of clusters, from the available points stored
+        and available in the matrix 'mat'.
+        '''
+
+        # need a total of k (clusters) by total features centroids
+        all_centroids = np.zeros((self.k, self.num_feats))
+
+        # random selection of (k) P[oints]
+        for p in range(self.k):
+            # pick random point from all available
+            aCentroid = mat[np.random.choice(range(self.num_examples))]
+            # save it
+            all_centroids[p] = aCentroid
+
+        # return the randomly generated centroids
+        return all_centroids
+
+
+    def _cluster_points(self, mat: np.array):
+        '''
+        Private method to create clusters based on the proximity of
+        each point. 
+        Note that proximity is calculated based on the metric
+        inputed -- in this case we take advantage of cdist, as
+        imported above the start of this script.
+
+        '''
+        # get all distances first with the given self.metric
+        dist_points = cdist(mat, self.centroids, metric = self.metric)
+
+        # get points that are closest to the centroids (here labels are indices)
+        k_clusters_min = np.argmin(dist_points, axis=1)
+
+        return k_clusters_min
+
+    
+    def _get_centroids(self, clusters, mat):
+
+        all_centroids = np.zeros((self.k, self.num_feats))
+
+        for i, cluster in enumerate(clusters):
+            update_centroid = np.mean(mat[cluster], axis=0)    
+            all_centroids[i] = update_centroid
+
+        return all_centroids
+
+
+
