@@ -61,15 +61,19 @@ class KMeans:
 
             # old centroids vs new assigned based on mean
             prev_centroids = self.centroids 
-            self.centroids = self._get_centroids(clusters, mat)
+
+            # update centroids
+            for i in range(self.k):
+                self.centroids[i] = np.mean(mat[clusters == i], axis=0)
+
 
             # calculate mse, via cdist, np.square and np.mean - yay vector ops
             mse = np.average(np.square(np.min(cdist(mat, 
                                                 self.centroids,
-                                            metric = self.metric))))
+                                            metric = self.metric), axis=1)))
 
             # delta errors, for checking diff.
-            delta_err = self._err - mse
+            delta_err = np.abs(self._err - mse)
 
             if delta_err < self.tol:
                 print("Clusters found -- Convergence Achieved)")
@@ -129,7 +133,7 @@ class KMeans:
         # random selection of (k) P[oints]
         for p in range(self.k):
             # pick random point from all available
-            aCentroid = mat[np.random.choice(range(self.num_examples))]
+            aCentroid = mat[np.random.choice(range(self.num_samples))]
             # save it
             all_centroids[p] = aCentroid
 
@@ -153,17 +157,3 @@ class KMeans:
         k_clusters_min = np.argmin(dist_points, axis=1)
 
         return k_clusters_min
-
-    
-    def _get_centroids(self, clusters, mat):
-
-        all_centroids = np.zeros((self.k, self.num_feats))
-
-        for i, cluster in enumerate(clusters):
-            update_centroid = np.mean(mat[cluster], axis=0)    
-            all_centroids[i] = update_centroid
-
-        return all_centroids
-
-
-

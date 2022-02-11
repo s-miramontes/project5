@@ -30,12 +30,12 @@ class Silhouette:
         scores = np.zeros(X.shape[0])
 
         # parwise dists for all points in X
-        pair_dists = cdist(X, X, metric = self.metric)
+        dists_init = cdist(X, X, metric = self.metric)
 
 
         for idx in range(X.shape[0]):
 
-            pair_dists = pair_dists[idx, y == y[idx]]
+            pair_dists = dists_init[idx, y == y[idx]]
 
             # intracluster distance at idx where label y corresponds to label at idx
             intra_num = np.sum(pair_dists)
@@ -46,22 +46,18 @@ class Silhouette:
             # intercluster arr to hold all dists
             inter_dists = np.ones(np.max(y)) * np.inf 
 
+            # since now inter, we look through all labels
             for l in range(np.max(y)):
-
                 if l != y[idx]:
-                    inter_dists[l] = np.sum(pair_dists[idx, y == l])/np.sum(y == l)
+                    inter_dists[l] = np.sum(dists_init[idx, y == l])/np.sum(y == l)
 
             inter = np.min(inter_dists)
+
+            # now apply formula
             scores[idx] = (inter - intra)/np.max([intra, inter])
 
         self.scores = scores
 
         return self.scores
-
-
-
-
-
-
 
 

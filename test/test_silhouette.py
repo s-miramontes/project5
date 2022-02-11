@@ -1,5 +1,5 @@
 # write your silhouette score unit tests here
-import numpy as numpy
+import numpy as np
 from cluster import(Silhouette, make_clusters)
 
 # import sklearn silhouettes?
@@ -21,7 +21,6 @@ def test_silhouette():
 	get_scores =ss.score(clusters, labels)
 
 	# check bounds
-	assert np.all(get_scores >= -1) and np.all(get_scores <= 1)
-	# based on ground truth
-	ssert np.mean(get_scores) > 0.9
+	assert get_scores.all() >= -1 and get_scores.all() <= 1
+
 
