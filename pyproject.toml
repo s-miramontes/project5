@@ -7,3 +7,6 @@ name = "cluster"
 authors = [{name = "Silvia Miramontes", email = "silvia.miramontes@ucsf.edu"}]
 readme = "README.md"
 dynamic = ["version", "description"]
+
+dependencies = ["pytest", "numpy", "scipy", "matplotlib", "scikit-learn"]
+
