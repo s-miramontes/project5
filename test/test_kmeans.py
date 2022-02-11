@@ -5,6 +5,7 @@ import pytest
 import cluster
 
 # there we go
+import sklearn
 from sklearn.cluster import KMeans
 
 def test_inputs():
