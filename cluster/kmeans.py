@@ -19,7 +19,15 @@ class KMeans:
             max_iter: int
                 the maximum number of iterations before quitting model fit
         """
-    
+        # making sure the inputted k is greater than
+        assert k > 0, "K must be greater than zero!"
+
+        # making sure the num of iterations is +
+        assert max_iter >0, "Num Iterations must be grater than zero!"
+
+        # assert tol is slightly greater than zero
+        assert tol > 0, "Tol must be sliiiightly greater than zero!"
+
         self.k = k 
         self.metric = metric
         self.tol = tol
